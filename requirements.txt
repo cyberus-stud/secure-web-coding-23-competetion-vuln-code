@@ -1,0 +1,6 @@
+Flask
+gunicorn
+sqlalchemy
+mysql 
+pymysql
+Werkzeug   

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'bootstrap_css.html' %}
+    <title>Cyber Careers</title>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    {% include 'banner.html' %}
+    {% include 'listen_flashes.html' %}
+
+    <div class="container">
+        <h1 class="text-center" style="padding-top: 10px;">Welcome {{username}} !</h1>
+        <h1 class="text-left" style="padding-top: 60px;"><u>About Cyber Careers</u></h1>
+        <div class="row" style="margin-bottom: 50px;">
+            <div class="col-md-6">
+             <p class="lead">At Cyber Careers, we are your trusted gateway to the exciting world of cybersecurity. As technology rapidly evolves, safeguarding sensitive data and digital assets has become paramount for individuals and organizations alike. That's where cybersecurity professionals come into play – the modern-day defenders of the digital realm.
+
+                Our platform is designed to guide you on your journey to a fulfilling and rewarding career in cybersecurity. Whether you're a seasoned professional looking to advance your skills or a curious newcomer eager to explore this dynamic field, we have resources and opportunities to suit every level of expertise.</p>
+            </div>
+            <div class="d-none d-md-block col-md-6 ">
+             <img src="../static/images/processes_monitoring.jpg" alt="img" style="float:right; height:320px;border-radius: 10px;">
+            </div>
+        </div>
+    <h2 class="text-center mt-4" >Available Positions</h2>
+        {% for job in jobs %}
+            {% include 'job_item.html' %}
+        {% endfor %}
+    <div class="text-center">
+        
+        <a class="btn btn-secondary btn-lg" href="mailto:salehadel2001@gmail.com?subject=Question%20About%20The%20Job%20Openings&body=I%20need%20to%20ask%20about%20%3CYour%20Question%20here%3E">Contact Us</a>
+    </div>
+    </div>
+
+  {% include 'bootstrap_js.html' %}
+  {% include 'footer.html' %}
+</body>
+</html>
