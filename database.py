@@ -106,20 +106,6 @@ def get_jobs_from_db():
             
     return jobs_dicts
 
-def job_search(job_name):
-    with create_sqlite_connection() as conn:
-        query = f"SELECT * FROM jobs WHERE title = '{job_name}'"
-        try:
-            result = conn.execute(query)
-            jobs_dicts = []
-            for row in result.fetchall():
-                columns = [column[0] for column in result.description]
-                job_dict = dict(zip(columns, row))
-                jobs_dicts.append(job_dict)
-            return jobs_dicts
-        except Exception as e:
-            return e
-
 def get_job_from_db(jid):
     with create_sqlite_connection() as conn:
         cursor = conn.cursor()
@@ -178,6 +164,20 @@ def add_job_to_db(data):
             conn.commit()
         except Exception as e:
             return -1
+
+def job_search(job_name):
+    with create_sqlite_connection() as conn:
+        query = f"SELECT * FROM jobs WHERE title = '{job_name}'"
+        try:
+            result = conn.execute(query)
+            jobs_dicts = []
+            for row in result.fetchall():
+                columns = [column[0] for column in result.description]
+                job_dict = dict(zip(columns, row))
+                jobs_dicts.append(job_dict)
+            return jobs_dicts
+        except Exception as e:
+            return e
 
 def add_user_to_db(data):
     with create_sqlite_connection() as conn:

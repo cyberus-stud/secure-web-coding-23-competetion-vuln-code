@@ -5,51 +5,41 @@ from database import *
 
 app = Flask(__name__)
 app.permanent_session_lifetime = timedelta(minutes=5)
-#########################################################
-# WEEK HASHING
-#########################################################
+
 app.config['SECRET_KEY'] = 'SUPER_SECRET_KEY'
 connection = create_sqlite_connection()
 
 @app.route('/')
 def home():
-    if "username" in session:  # check if user's session is stored or not
-        username = session["username"]  # getting username by his session
+    if "username" in session: 
+        username = session["username"] 
         
         return render_template('home.html', jobs=get_jobs_from_db(), username=username)
     else:
         flash("You are not logged in", category='success')
         return redirect(url_for("login"))
 
-#########################################################
-# PASSWORD POLICY & WEEK HASHING 
-#########################################################
+
 @app.route('/sign-up',  methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'GET':
         return render_template('sign_up.html')
     elif request.method == 'POST':
-        # List of all required form fields
+       
         required_fields = ['firstname', 'lastname', 'email', 'username', 'password1', 'password2', 'country', 'city',  'phone', 'birthdate']
-        # Check if all fields are filled
         if all(request.form.get(field) for field in required_fields):
-            # check if the user choosed valid email and user name that not already exist in the datbase
             if is_user_exist_in_db(email=request.form.get('email')):
-                # the email already exists 
                 flash('The email you have entered already exists, choose different one', category='error')
                 return render_template('sign_up.html')
             
             if is_user_exist_in_db(username=request.form.get('username')):
-                # the username already exists 
                 flash('The username you have entered already exists, choose different one', category='error')
                 return render_template('sign_up.html')
 
-            #chek if the password and the confirm password are the same
             if request.form.get('password1') != request.form.get('password2'):
                  flash('The passwords should match each others', category='error')
                  return render_template('sign_up.html')
 
-            # Process form data and save to the database
             data = {
                 'firstname': request.form.get('firstname'),
                 'lastname': request.form.get('lastname'),
@@ -66,32 +56,24 @@ def sign_up():
             print(type(data['birthdate']))
 
             if add_user_to_db(data) != -1:
-                # Store success message in the session
                 flash('Congratulations! your account has been created successfully', category='success')
                 return redirect(url_for('login'))
             else:
                 flash('There was an error accured while creating your account', category='error')
                 return redirect(url_for('home.html'))
 
-#########################################################
-# BRUTE-FORCING
-#########################################################
+
 @app.route('/login',  methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
       return  render_template('login.html')
     elif request.method == 'POST':    
-         # List of all required form fields
         required_fields = ['username', 'password']
         if all(request.form.get(field) for field in required_fields):
-            # user authentication 
             if check_password(username=request.form.get('username'), password=request.form.get('password')):
-                # setting the session
                 session.permanent = True
-                username = request.form.get("username")  # get username from the form
-                # set session of the user with username 
+                username = request.form.get("username")  
                 session["username"] = username
-                # setting the user id in the session 
                 session["user_id"] = str(get_user_data_from_db(username=username)['id'])
                 flash('Logged In Successfully', category='success')
                 
@@ -100,9 +82,6 @@ def login():
                 flash('The password or username you entered is not correct', category='error')
                 return render_template('login.html')
 
-#########################################################
-# IDOR | WEEK HASHING & Cookie Tampering
-#########################################################
 @app.route('/admin/add-new-job', methods=['GET', 'POST'])
 def add_new_job():
     if request.method == 'POST':
@@ -128,15 +107,12 @@ def add_new_job():
                 flash('YOU ARE NOT THE ADMIN, YOU DO NOT HAVE PERMISSION TO ACCESS THIS CONTENT !!', category='error')       
                 return redirect(url_for('home'))
 
-#########################################################
-# SSTI
-#########################################################               
+               
 @app.route('/job/<jid>')
 def show_job_details(jid):
     job = get_job_from_db(jid)
     if not job :
         return "<h1>Not Found</h1>" , 404
-    # Create a dictionary to map placeholders to actual values
     replacement_dict = {
 		"$title$": job['title'],
 		"$responsibilities$": job['responsibilities'],
@@ -146,15 +122,10 @@ def show_job_details(jid):
 	}
     with open('templates/job_details.html') as file:
         template_content = file.read()
-		# Replace placeholders in the template content using the dictionary
         for placeholder, value in replacement_dict.items():
             template_content = template_content.replace(placeholder, value)
-		# Render the template with replaced values and comments
         return render_template_string(template_content, job=job)
 
-#########################################################
-# Unrestricted File Uploading
-#########################################################
 @app.route('/job/<jid>/apply', methods=['GET', 'POST'])
 def show_application_form(jid):
     job = get_job_from_db(jid)
@@ -164,7 +135,6 @@ def show_application_form(jid):
     if request.method == 'GET':
         return render_template('application_form.html', job=job)
     elif request.method == 'POST':
-            # Process form data and save to the database
             cv_file = request.files['cv']
             cv_url = f"static/uploads/{cv_file.filename}"
             data = {
@@ -180,16 +150,13 @@ def show_application_form(jid):
             }
             cv_file.save(cv_url)           
             if store_application_to_db(jid=jid,uid=session["user_id"], data=data) != -1:
-                # Store success message in the session
                 flash('Congratulations! your application has been submitted successfully', category='success')
                 return redirect(url_for('home'))
             else:
                 flash('There was an error accured while submitting your application', category='error')
                 return render_template('application_form.html', job=job)
 
-#########################################################
-# SQL INGECTION
-#########################################################
+
 @app.route('/search')
 def search_job():
     job_name = request.args.get('job_name')
@@ -200,9 +167,7 @@ def search_job():
 def show_courses():
     return render_template('courses.html', courses=get_courses_from_db())
 
-#########################################################
-# PIRCE MANIPULATION
-#########################################################
+
 @app.route('/courses/<cid>/enroll', methods=['GET', 'POST'])
 def enroll_course(cid):
     course = get_course_from_db(cid)
@@ -216,9 +181,6 @@ def enroll_course(cid):
         flash(f'Congratulations !! you have got the course with {price} {currency}', category='success')
         return redirect(url_for('show_courses'))
 
-#########################################################
-# XSS
-#########################################################
 @app.route('/courses/<cid>/content', methods=['GET', 'POST'])
 def show_course_content(cid):
     course = get_course_from_db(cid)
